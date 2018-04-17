@@ -1,0 +1,74 @@
+//在c程序中处理命令行参数，应该使用标准的getopt/getopt_long相关函数
+//（在Linux下可以直接man getopt），不需要自己做解析。 参考下面的例子：
+#define _GNU_SOURCE
+#include <getopt.h>
+
+void ShowHelpInfo()
+{
+  printf("Usage: BuildCRLCache [option]...\n\n");
+  printf("  -h, --help      display this help\n");
+  printf("  -v/V, --Version       show version\n");
+  printf("  -d, --crldir    directory of crl files\n");
+  printf("  -c, --cachefile       cache filename\n");
+  printf("  -s, --strictcompare   compare crl file by content\n");
+  printf("\n");
+}
+
+int main(int argc , char * argv[])
+{
+  char szCRLDir[256] = "../crl";
+  char szCacheFile[256] = "./crl.cache";
+
+  int ret = 0;
+  int c = 0;
+  int option_index = 0;
+
+  /**     
+   *  定义命令行参数列表，option结构的含义如下（详见 man 3 getopt）：
+   *  struct option {
+   *      const char *name;      //参数的完整名称，对应命令中的 --xxx
+   *      int  has_arg;   //该参数是否带有一个值，如 –config xxx.conf
+   *      int *flag;      //一般设置为NULL
+   *      int  val;       //解析到该参数后getopt_long函数的返回值，为了方便维护，一般对应getopt_long调用时第三个参数
+   *  };
+   */
+  
+  static struct option arg_options[] =
+  {
+    {"help", 0, 0, 'h'},
+    {"version", 0, 0, 'v'},
+    {"cachefile", 1, 0, 'c'},
+    {"crldir", 1, 0, 'd'},
+    {"strictcompare", 1, 0, 's'},
+    {0, 0, 0, 0}
+  };
+
+  /**
+   *  注意：传递给getopt_long的第三个参数对应了命令行参数的缩写形式，如-h, -v, -c等，
+   *  如果字符后面带有冒号，则说明该参数后跟一个值，如-c xxxxxx             
+   */
+  while ((c = getopt_long(argc, argv, "hvVc:d:s", arg_options, &option_index)) != -1) {
+    switch (c) {
+    case 'h':
+      ShowHelpInfo();
+      return 0;
+    case 'v':
+    case 'V':
+      ShowVersionInfo();
+      return 0;
+    case 'c':
+          /*     optarg是getopt实现中的一个全局变量，对应当前参数后面跟的值，如-c xxxx中的xxxx  */
+      strncpy( szCacheFile, optarg, sizeof(szCacheFile) );
+      break;
+    case 'd':
+      strncpy( szCRLDir, optarg, sizeof(szCRLDir) );
+      break;
+    case 's':
+      fCompare = CRLFile_Compare;
+      break;
+    default:
+      fprintf( stderr, "Unknown option: %c\n", c);
+      ShowHelpInfo();
+      return -1;
+    }
+  }

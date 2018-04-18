@@ -155,7 +155,7 @@ int main(int argc , char * argv[])
       if( output == NULL)
       {
         char tmp[20] ;
-        sprintf(tmp, "newfile.%s", format);
+        sprintf(tmp, "newfile.%s.enc", format);
         output = tmp;
         printf("a new file \"%s\" is created!", output);
       }
@@ -171,7 +171,28 @@ int main(int argc , char * argv[])
     }
     else if(!strcmp("decrypt", mode)) 
     {
-
+      if(algor == NULL)
+      {  
+        fprintf (stdout, "default algorithom(aes-128-cbc) is used!\n");
+        algor = "aes-128-cbc";
+      }
+      CCipher ci(algor);
+      if( output == NULL)
+      {
+        char tmp[20] ;
+        sprintf(tmp, "newfile.%s.dec", format);
+        output = tmp;
+        printf("a new file \"%s\" is created!", output);
+      }
+      if(strcmp(format, "binary") && strcmp(format, "hex") && strcmp(format, "base64"))
+      {
+        fprintf (stderr, "Unknown format: %s!\n", format);
+        ShowHelpInfo();
+        return -1;
+      }
+      if (!(ci.Decrypt(input, output, key, iv, format, NULL)))
+        return -1;
+       
     }
     else if(!strcmp("digest", mode))
     {

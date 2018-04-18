@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace std;
+
 void ShowHelpInfo()
 {
   printf("Usage: simplessl [option]...\n\n");
@@ -139,7 +141,8 @@ int main(int argc , char * argv[])
     format = "binary";
   }
 
-  try 
+  OpenSSL_add_all_algorithms();
+  try
   {
     if(!strcmp("encrypt", mode))  
     {
@@ -183,10 +186,13 @@ int main(int argc , char * argv[])
       return -1;
     }
   }
-  catch (char* msg)
+  catch (string str)
   {
-    printf("%s\n",msg);
+    cout << str;
   }
 
+  EVP_cleanup();
   return 0;
 }
+
+

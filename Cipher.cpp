@@ -1,5 +1,5 @@
 #include "Cipher.h"
-
+using namespace std;
 int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned char* aKey, const unsigned char* iVec, const char* format, ENGINE *impl)
 {
   int n = 0;
@@ -21,9 +21,9 @@ int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned cha
     mode = Base64;
   else
   {
-    sprintf(m_szErr, "CCipher::Encrypt: Unknown format (%s)!\n", format);
-    Cleanup();
-    throw m_szErr;
+    stringstream oss;
+    oss << "CCipher::Encrypt: Unknown format " << format;
+    throw oss.str();
   }
   
   unsigned char* keybin = NULL;
@@ -47,26 +47,28 @@ int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned cha
     n = ERR_get_error();
     char errmsg[1024];
     ERR_error_string(n, errmsg);
-    sprintf(m_szErr, "CCipher::Encrypt: EVP_CipherInit_ex failed: \nopenssl return %d, %s\n", n, errmsg);
-    Cleanup();
-    throw m_szErr;
+    ostringstream oss;
+    oss << "CCipher::Encrypt: EVP_CipherInit_ex failed!\nopenssl return " << n << ", ErrMess:" << errmsg << endl;
+    throw oss.str();
   }
 
   if (!(m_fpin = fopen(inFile, "rb")))
   {
     char errmsg[1024];
     char* msg = strerror_r(errno, errmsg, 1024);
-    sprintf(m_szErr, "CCipher::Encrypt: file(%s) open failed!\nerrno=%d, ErrMess:%s\n", inFile, errno, msg);
-    Cleanup();
-    throw m_szErr;
+    ostringstream oss;
+    oss <<  "CCipher::Encrypt: file" << inFile << " open failed!\nerrno=" << errno << ", ErrMess:" << msg  << endl;
+    FileClose();
+    throw oss.str();
   }
   if (!(m_fpout = fopen(outFile, "wt")))
   {
     char errmsg[1024];
     char* msg = strerror_r(errno, errmsg, 1024);
-    sprintf(m_szErr, "CCipher::Encrypt: file(%s) open failed!\nerrno=%d, ErrMess:%s\n", outFile, errno, msg);
-    Cleanup();
-    throw m_szErr;
+    ostringstream oss;
+    oss << "CCipher::Encrypt: file(" << outFile <<") open failed!\nerrno=" << errno <<", ErrMess:" << msg << endl;
+    FileClose();
+    throw oss.str();
   }
   while(readlen = fread(inbuf, 1, BufferSize, m_fpin))
   {
@@ -79,9 +81,10 @@ int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned cha
       n = ERR_get_error();
       char errmsg[1024];
       ERR_error_string(n, errmsg);
-      sprintf(m_szErr, "CCipher::Encrypt: EVP_CipherUpdate failed!\nopenssl return %d, %s\n", n, errmsg);
-      Cleanup();
-      throw m_szErr;
+      ostringstream oss;
+      oss << "CCipher::Encrypt: EVP_CipherUpdate failed!\nopenssl return " << n << ", ErrMess:" << errmsg << endl;
+      FileClose();
+      throw oss.str();
     }
     if(mode)
     {
@@ -97,12 +100,14 @@ int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned cha
     {
       char errmsg[1024];
       char* msg = strerror_r(errno, errmsg, 1024);
-      sprintf(m_szErr, "CCipher::Encrypt: file(%s) write failed!\nerrno=%d, ErrMess:%s\n", outFile, errno, msg);
+      ostringstream oss;
+      oss << "Cipher::Encrypt: file" << outFile << "write failed!\nerrno=" << errno <<", ErrMess:" << msg << endl;
       if(mode)
         free(transData);
       transData = NULL;
-      Cleanup();
-      throw m_szErr;
+
+      FileClose();
+      throw oss.str();
     }
     if(mode)
       free(transData);
@@ -121,9 +126,10 @@ int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned cha
       n  = ERR_get_error();
       char errmsg[1024];
       ERR_error_string( n, errmsg );
-      sprintf( m_szErr, "CCipher::Encrypt  EVP_CipherFinalfailed: \nopenssl return %d, %s\n", n, errmsg );
-      Cleanup();
-      throw m_szErr;
+      ostringstream oss;
+      oss <<  "CCipher::Encrypt  EVP_CipherFinalfailed: \nopenssl return " << n << ", ErrMess:" << errmsg << endl;
+      FileClose();
+      throw oss.str();
     }
     if(mode) 
     {
@@ -141,12 +147,13 @@ int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned cha
       {
         char errmsg[1024];
         char* msg = strerror_r(errno, errmsg, 1024);
-        sprintf(m_szErr, "CCipher::Encrypt: file(%s) write failed!\nerrno=%d, ErrMess:%s\n", outFile, errno, msg);
+        ostringstream oss;
+        oss << "CCipher::Encrypt: file(" << outFile <<") write failed!\nerrno=" << errno <<", ErrMess:" << msg << endl;
         if(mode)
           free(transData);
         transData = NULL;
-        Cleanup();
-        throw m_szErr;
+        FileClose();
+        throw oss.str();
       }
       if(mode)
         free(transData);
@@ -157,10 +164,12 @@ int CCipher::Encrypt(const char* inFile, const char* outFile, const unsigned cha
   {
     char errmsg[1024];
     char* msg = strerror_r(errno, errmsg, 1024);
-    sprintf(m_szErr, "CCipher::Encrypt: file(%s) read failed!\nerrno=%d, ErrMess:%s\n", outFile, errno, msg);
-    Cleanup();
-    throw m_szErr;
+    ostringstream oss;
+    oss << "CCipher::Encrypt: file(" << outFile << ") read failed!\nerrno=" << errno << ", ErrMess:" << msg <<endl;
+    FileClose();
+    throw oss.str();
   }
+  FileClose();
   return 0;
 }
 
@@ -172,20 +181,41 @@ int CCipher::Decrypt(const char* inFile, const char* outFile, const unsigned cha
 
 CCipher::CCipher(const char* ciphername): m_fpin(NULL), m_fpout(NULL)
 {
-    OpenSSL_add_all_algorithms();
-    m_ctx = EVP_CIPHER_CTX_new();
-    if(!m_ctx)
-    {
-      sprintf(m_szErr, "CCipher construct fail: EVP_CIPHER_CTX_new failed\n",ciphername);
-      Cleanup();
-      throw m_szErr;
-    }
-    m_cipher = EVP_get_cipherbyname(ciphername);
-    if (NULL == m_cipher) {
-      sprintf(m_szErr, "CCipher construct fail: Cipher for %s is NULL\n",ciphername);
-      Cleanup();
-      throw m_szErr;
-    }
+  
+  m_ctx = EVP_CIPHER_CTX_new();
+  if(!m_ctx)
+  {
+    ostringstream oss;
+    oss << "CCipher construct fail: EVP_CIPHER_CTX_new failed\n";
+    Cleanup();
+    throw oss.str();
+  }
+  m_cipher = EVP_get_cipherbyname(ciphername);
+  if (NULL == m_cipher) 
+  {
+    ostringstream oss;
+    oss << "CCipher construct fail: Cipher for " << ciphername <<" is NULL\n";
+    Cleanup();
+    throw oss.str();
+  }
+}
+
+CCipher::CCipher(const CCipher& other)
+{
+  if (EVP_CIPHER_CTX_copy(m_ctx, other.m_ctx))
+  {
+    m_fpin = NULL;
+    m_fpout = NULL;
+    m_cipher = m_ctx -> cipher;
+  }
+  
+}
+
+CCipher &CCipher::operator=(const CCipher& other)
+{
+  CCipher tmp(other);
+  this->Swap(tmp);
+  return *this;
 }
 
 CCipher::~CCipher()
@@ -195,7 +225,6 @@ CCipher::~CCipher()
 
 void CCipher::Reset(const char* ciphername)
 {
-
   CCipher tmp(ciphername);
   Swap(tmp);
 }
@@ -207,8 +236,7 @@ void CCipher::Swap(CCipher& other)
   swap(m_ctx, other.m_ctx);//passing temporary object, try bind to a non-const lval 
 }
 
-
-void CCipher::Cleanup()
+void CCipher::FileClose()
 {
   if(m_fpin)
   {  
@@ -220,9 +248,14 @@ void CCipher::Cleanup()
     fclose(m_fpout);
     m_fpout = NULL;
   }
+ 
+}
+void CCipher::Cleanup()
+{
+  FileClose();
   EVP_CIPHER_CTX_cleanup(m_ctx);
   EVP_CIPHER_CTX_free(m_ctx);
-  EVP_cleanup();
+  
 }
 
 //if (offsetData == NULL), then it's the last round
@@ -232,9 +265,10 @@ unsigned char* CCipher::TransCode(unsigned char* input, int* plen, MODE mode, bo
 
   if(!input)
   {
-    sprintf(m_szErr, "CCipher::TransCode: input null pointer!");
-    Cleanup();
-    throw m_szErr;
+    ostringstream oss;
+    oss << "CCipher::TransCode: input null pointer!";
+    FileClose();
+    throw oss.str();
   }
   if(isEncode) 
   {
@@ -242,9 +276,10 @@ unsigned char* CCipher::TransCode(unsigned char* input, int* plen, MODE mode, bo
     {
       if (!(transData = Byte2Hex(input, *plen, 0)))
       {
-        sprintf(m_szErr, "CCipher::TransCode: unsigned char2Hex transform failed!");
-        Cleanup();
-        throw m_szErr;
+        ostringstream oss;
+        oss << "CCipher::TransCode: unsigned char2Hex transform failed!";
+        FileClose();
+        throw oss.str();
       }
     }
     else if(Base64 == mode)
@@ -261,9 +296,10 @@ unsigned char* CCipher::TransCode(unsigned char* input, int* plen, MODE mode, bo
       }
       if (!(transData = Base64Encode(input,*plen , 0)))   
       {
-        sprintf(m_szErr, "CCipher::TransCode: Base64Encode transform failed!");
-        Cleanup();
-        throw m_szErr;
+        ostringstream oss;
+        oss << "CCipher::TransCode: Base64Encode transform failed!";
+        FileClose();
+        throw oss.str();
       }
       if(offsetData && *offset != 0)
       { 
@@ -271,10 +307,11 @@ unsigned char* CCipher::TransCode(unsigned char* input, int* plen, MODE mode, bo
       }
     }
     else
-    {
-      sprintf(m_szErr, "CCipher::TransCode:  Only Hex and Base64 are supported so far, sorry!");
-      Cleanup();
-      throw m_szErr;
+    { 
+      ostringstream oss;
+      oss << "CCipher::TransCode:  Only Hex and Base64 are supported so far, sorry!";
+      FileClose();
+      throw oss.str();
     }
   }
   //Decode
@@ -284,9 +321,10 @@ unsigned char* CCipher::TransCode(unsigned char* input, int* plen, MODE mode, bo
     {
       if (!(transData = Hex2Byte(input, plen, 0)))
       {
-        sprintf(m_szErr, "CCipher::TransCode: Hex2unsigned char transform failed!");
-        Cleanup();
-        throw m_szErr;
+        ostringstream oss;
+        oss << "CCipher::TransCode: Hex2unsigned char transform failed!";
+        FileClose();
+        throw oss.str();
       }
     }
     else if(Base64 == mode)
@@ -304,9 +342,10 @@ unsigned char* CCipher::TransCode(unsigned char* input, int* plen, MODE mode, bo
  
       if (!(transData = Base64Decode(input, plen , 0)))   
       {
-        sprintf(m_szErr, "CCipher::TransCode: Base64Decode transform failed!");
-        Cleanup();
-        throw m_szErr;
+        ostringstream oss;
+        oss << "CCipher::TransCode: Base64Decode transform failed!";
+        FileClose();
+        throw oss.str();
       }
       if(offsetData && *offset != 0)
       { 
@@ -316,15 +355,17 @@ unsigned char* CCipher::TransCode(unsigned char* input, int* plen, MODE mode, bo
     }
     else
     {
-      sprintf(m_szErr, "CCipher::TransCode:  Only Hex and Base64 are supported so far, sorry!");
-      Cleanup();
-      throw m_szErr;
+      ostringstream oss;
+      oss << "CCipher::TransCode:  Only Hex and Base64 are supported so far, sorry!";
+      FileClose();
+      throw oss.str();
     }
  
   }
   return transData;
 }
 
+/*
 namespace std {
   template<>
   void swap<CCipher> (CCipher& a, CCipher& b)
@@ -333,5 +374,5 @@ namespace std {
   }
   
 }
-
+*/
 

@@ -10,6 +10,10 @@
 #include <openssl/x509v3.h>
 #include "transcode.h"
 #include <string.h>
+#include <exception>
+#include <sstream>
+#include <iostream>
+
 
 const int BufferSize = 2048;
 const int MaxBlockSize = 256;
@@ -23,15 +27,17 @@ typedef enum Mode{
 class CCipher
 {
 private:
-  char m_szErr[BufferSize];
   FILE *m_fpin, *m_fpout;
+
   //if (offsetData == NULL), then it's the last round
+  void Cleanup();
   unsigned char* TransCode(unsigned char* input, int *plen, MODE mode, bool isEncode, unsigned char* offsetData, int* offset);
+  void FileClose();
 protected:
   EVP_CIPHER_CTX *m_ctx;
   const EVP_CIPHER *m_cipher;
 public:
-  CCipher(const char* ciphername);
+  CCipher(const char* ciphername = "aes-128-cbc");
   virtual ~CCipher();
   CCipher(const CCipher&);
   CCipher &operator= (const CCipher&);
@@ -39,8 +45,11 @@ public:
   int Decrypt(const char* inFile, const char* outFile, const unsigned char* aKey, const unsigned char* iVec, const char* format = "binary", ENGINE *impl = NULL);
   void Reset(const char* ciphername);
   void Swap(CCipher& ci);
-  void Cleanup();
-  
+  friend void swap(CCipher& a, CCipher& b)
+  {
+    a.Swap(b);
+  }
+ 
 };
 
 

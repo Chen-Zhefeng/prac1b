@@ -27,7 +27,6 @@ typedef enum Mode{
 class CCipher
 {
 private:
-  FILE *m_fpin, *m_fpout;
 
   //if (offsetData == NULL), then it's the last round
   void Cleanup();

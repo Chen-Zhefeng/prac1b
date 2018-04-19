@@ -179,7 +179,7 @@ int CCipher::Decrypt(const char* inFile, const char* outFile, const unsigned cha
   unsigned char* transData = NULL;
   unsigned char inbuf[BufferSize + 3];
   unsigned char outbuf[BufferSize + 3];
-  unsigned char offsetData[2];
+  unsigned char offsetData[3];
   int offset = 0;
   int readlen = 0;
   int writelen = 0;
@@ -201,17 +201,17 @@ int CCipher::Decrypt(const char* inFile, const char* outFile, const unsigned cha
   
   unsigned char* keybin = NULL;
   unsigned char* ivbin = NULL;
-  if(aKey)
+   if(aKey)
   {
     int keylen =  strlen((const char*)aKey);
-    keybin = Byte2Hex(aKey, keylen, 0);
+    keybin = Hex2Byte(aKey, &keylen, 0);
   }
   if(iVec)
   {
     int ivlen =  strlen((const char*)iVec);
-    ivbin = Byte2Hex(iVec, ivlen, 0);
+    ivbin = Hex2Byte(iVec, &ivlen, 0);
   }
-  /*
+   /*
    * 初始化算法：设置算法密钥，IV，以及加解密标志位dir
    * 如果使用Engine，此时会调用其实现的EVP_CIPHER->init回调函数
    */

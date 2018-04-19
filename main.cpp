@@ -104,11 +104,11 @@ int main(int argc , char * argv[])
     case '?':
       fprintf (stderr, "Unknown option -%c\n", optopt);
       ShowHelpInfo();
-      break;
+      return -1;
     case ':':
       fprintf (stderr, "Option -%c requires an argument\n", optopt);
       ShowHelpInfo();
-      break;
+      return -1;
     default:
       abort();  
     }

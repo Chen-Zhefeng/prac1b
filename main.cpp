@@ -15,6 +15,7 @@ void ShowHelpInfo()
   printf("-i/--input (input file) for example in.txt\n");
   printf("-o/--output (output file) for example out.b64\n");
   printf("-f/--format (output/input format) [binary|hex|base64], binary as default\n");
+  printf("-n/--nonewline (if format is hex or base64, then it'll not create a new line every-64-character!)");
   printf("-h/--help (show the help info)\n");
   printf("\n");
 }
@@ -32,6 +33,7 @@ int main(int argc , char * argv[])
   const char *input = NULL;
   const char *output = NULL;
   const char *format = NULL;
+  bool with_new_line =true;
   /**     
    *  定义命令行参数列表，option结构的含义如下（详见 man 3 getopt）：
    *  struct option {
@@ -51,6 +53,7 @@ int main(int argc , char * argv[])
     {"input", 1, NULL, 'i'},
     {"output", 1, NULL, 'o'},
     {"format", 1, NULL, 'f'},
+    {"nonewline",0, NULL,'n'},
     {"help", 0, NULL, 'h'},
     {NULL, 0, NULL, 0}
   };
@@ -59,7 +62,7 @@ int main(int argc , char * argv[])
    *  注意：传递给getopt_long的第三个参数对应了命令行参数的缩写形式，如-h, -v, -c等，
    *  如果字符后面带有冒号，则说明该参数后跟一个值，如-c xxxxxx             
    */
-  while ((c = getopt_long(argc, argv, ":m:a:k:v:i:o:f:h", arg_options, &option_index)) != -1) 
+  while ((c = getopt_long(argc, argv, ":m:a:k:v:i:o:f:nh", arg_options, &option_index)) != -1) 
   {
     switch (c) 
     {
@@ -101,6 +104,11 @@ int main(int argc , char * argv[])
       fprintf(stdout,"option is -%c, optarv is %s\n", c, optarg);
         format = optarg;
       break;
+    case 'n':
+      fprintf(stdout,"option is -%c, optarv is %s\n", c, optarg);
+        with_new_line = false;
+      break;
+
     case '?':
       fprintf (stderr, "Unknown option -%c\n", optopt);
       ShowHelpInfo();
@@ -165,7 +173,7 @@ int main(int argc , char * argv[])
         ShowHelpInfo();
         return -1;
       }
-      if (!(ci.Encrypt(input, output, key, iv, format, NULL)))
+      if (!(ci.Encrypt(input, output, key, iv, format, NULL, with_new_line)))
         return -1;
       
     }
@@ -190,7 +198,7 @@ int main(int argc , char * argv[])
         ShowHelpInfo();
         return -1;
       }
-      if (!(ci.Decrypt(input, output, key, iv, format, NULL)))
+      if (!(ci.Decrypt(input, output, key, iv, format, NULL, with_new_line)))
         return -1;
        
     }
@@ -207,9 +215,9 @@ int main(int argc , char * argv[])
       return -1;
     }
   }
-  catch (string str)
+  catch (const exception& e)
   {
-    cout << str;
+    cout << e.what() << endl;
   }
 
   EVP_cleanup();

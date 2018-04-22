@@ -10,8 +10,7 @@ private:
     bool dismissed_;
 
 public:
-    ScopeGuard(destructor_type destructor ) : destructor_(destructor), dismissed_(false) {}
-
+    ScopeGuard(const destructor_type& destructor) : destructor_(destructor), dismissed_(false) {}
     ~ScopeGuard()
     {
         if (!dismissed_) {
@@ -38,23 +37,7 @@ public:
     ptr_ = NULL;
   }
   
-  malloc_free(const malloc_free&);
-  malloc_free& operator=(malloc_free const&);
-  malloc_free(malloc_free&& s) noexcept :  ptr_(move(s.ptr_))
-  {
-      s.ptr_ = NULL;  
-  }
-  malloc_free&  operator=(malloc_free&& s) noexcept 
-  {
-    if(this!=&s)
-    {
-     ptr_ = move(s.ptr_);
-     s.ptr_ = NULL;
-    }
-    return *this;
-  }
 };
-
 
 template <typename T>
 class new_delete
@@ -69,21 +52,7 @@ public:
       delete ptr_;
     ptr_ = NULL; 
   }
-  new_delete(new_delete const&) ;
-  new_delete& operator=(new_delete const&) ;
-  new_delete(new_delete&& s) noexcept :  ptr_(move(s.ptr_))
-  {
-      s.ptr_ = NULL;  
-  }
-  new_delete&  operator=(new_delete&& s) noexcept 
-  {
-    if(this!=&s)
-    {
-     ptr_ = move(s.ptr_);
-     s.ptr_ = NULL;
-    }
-    return *this;
-  } 
+ 
 };
 
 template <typename T>
@@ -99,21 +68,7 @@ public:
       delete[] ptr_;
     ptr_ = NULL; 
   }
-  news_delete(news_delete const&) ;
-  news_delete& operator=(news_delete const&) ;
-  news_delete(news_delete&& s) noexcept :  ptr_(move(s.ptr_))
-  {
-      s.ptr_ = NULL;  
-  }
-  news_delete&  operator=(news_delete&& s) noexcept 
-  {
-    if(this!=&s)
-    {
-     ptr_ = move(s.ptr_);
-     s.ptr_ = NULL;
-    }
-    return *this;
-  } 
+
 };
 
 class file_close 
@@ -126,19 +81,6 @@ public:
   { if (fp_)
       fclose(fp_); 
     fp_ = NULL; 
-  }
-  file_close(file_close const&) ;
-  file_close& operator=(file_close const&);
-  file_close(file_close&& s) noexcept : fp_(move(s.fp_))
-  {
-    s.fp_ = NULL;
-  }
-  file_close& operator= (file_close&& s) noexcept
-  {
-    file_close tmp(move(s));
-    using std::swap;
-    swap(tmp, *this);
-    return *this;
   }
 
 };

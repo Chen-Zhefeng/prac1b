@@ -1,6 +1,6 @@
-CC:=g++ -std=c++0x -g
+CC:=g++ -std=c++11 -g
 exe:=main
-obj:=main.o Cipher.o transcode.o
+obj:=main.o Cipher.o
 link:= -lssl -lcrypto
 
 all:$(obj)

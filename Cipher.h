@@ -15,7 +15,7 @@
 #include <iostream>
 
 
-const int BufferSize = 2048;
+const int BufferSize = 2048; //at least the same as modulus
 const int MaxBlockSize = 256;
 
 

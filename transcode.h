@@ -304,7 +304,7 @@ OutIterator Base64Encode (OutIterator out, InIterator first,  InIterator last, s
 }
 
 template <typename InIterator, typename OutIterator>
-OutIterator Base64Decode (OutIterator out,InIterator first, InIterator last, size_t& incount, bool with_new_line = true)
+OutIterator Base64Decodeold (OutIterator out,InIterator first, InIterator last, size_t& incount, bool with_new_line = true)
 {
   BIO *b64 = NULL;
   BIO *bmem =NULL;
@@ -418,6 +418,62 @@ OutIterator Base64Decode (OutIterator out,InIterator first, InIterator last, siz
    * out++ = * it++;
   return out;
 }
+
+template <typename InIterator, typename OutIterator>
+OutIterator Base64Decode (OutIterator out,InIterator first, InIterator last, size_t& incount, bool with_new_line = true)
+{
+  BIO *b64 = NULL;
+  BIO *bmem =NULL;
+  size_t cnt = 0;
+  if ((false ==  std::is_same<typename std::iterator_traits<InIterator>::value_type, unsigned char>::value 
+      && false ==  std::is_same<typename std::iterator_traits<InIterator>::value_type,char>::value 
+      && false ==  std::is_same<typename std::iterator_traits<InIterator>::value_type, const unsigned char>::value
+      && false ==  std::is_same<typename std::iterator_traits<InIterator>::value_type, const char>::value)
+      || ( false == std::is_same<typename std::iterator_traits<OutIterator>::value_type, unsigned char>::value
+      && false == std::is_same<typename std::iterator_traits<OutIterator>::value_type, void>::value))
+  {
+    std::string str("Base64Decode: value type of iterator error!");
+    throw Error(str); 
+  }
+  b64 = BIO_new(BIO_f_base64());
+  BIO_Guard b64_gd = {b64};
+  if (!with_new_line)
+  {
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+  }
+  size_t len = 0;
+  std::string str;
+  if (typeid(typename std::iterator_traits<InIterator>::iterator_category) != typeid(std::random_access_iterator_tag))
+  {
+    while(first != last)
+    {
+      str += *first++;
+      ++len;
+    }
+    bmem = BIO_new_mem_buf((void*)&str.front(),len);
+  }
+  else
+  {
+    len = last -first;
+    bmem = BIO_new_mem_buf((void*)first, len);
+  }
+  BIO_Guard bmem_gd = {bmem};
+
+  b64 = BIO_push(b64, bmem);  //
+
+  //之前由于把最后一个空格干掉了，导致b64转换错误
+  std::string strout;
+  strout.resize(len); //如n小于当前size，抛弃后面的元素；如大于size，后面会填充元素(如没有指定初始化值，则进行值初始化)
+  size_t rdlen = BIO_read(b64, reinterpret_cast<void*>(&strout.front()), len);//len byte from bio
+ // strout.shrink_to_fit();
+  strout.resize(rdlen);
+  auto it = strout.cbegin();
+  auto end = strout.cend();
+  while(it!= end)
+   * out++ = * it++;
+  return out;
+}
+
 
 
 //InIterator shoule should be random access iterator

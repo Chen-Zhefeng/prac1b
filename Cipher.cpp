@@ -276,10 +276,6 @@ int CCipher::Decrypt(const char* inFile, const char* outFile, const unsigned cha
       oss << "Cipher::Decrypt: file" << outFile << "write failed!\nerrno=" << errno <<", ErrMess:" << msg << endl;
       throw Error(oss.str());
     }
-    int a =0;
-    while(a<cryptlen)
-    cout<<*(outbuf+a++);
- 
   }
   if ( feof(fp_in) )
   {
@@ -308,9 +304,6 @@ int CCipher::Decrypt(const char* inFile, const char* outFile, const unsigned cha
           throw Error(oss.str());
         
         }
-        int a =0;
-        while(a<cryptlen)
-          cout<<*(outbuf+a++);
       }
     }
    /**

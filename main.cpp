@@ -121,13 +121,13 @@ int main(int argc , char * argv[])
       abort();  
     }
   }
-  if(isSet & 1 == 0)
+  if((isSet & 1) == 0)
   {
     fprintf (stderr, "lack of mode!\n");
     ShowHelpInfo();
     return -1;
   }  
-  if(isSet &  16 == 0)
+  if((isSet &  16) == 0)
   {
     fprintf (stderr, "lack of input file!\n");
     ShowHelpInfo();

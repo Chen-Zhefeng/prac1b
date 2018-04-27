@@ -9,9 +9,8 @@
 #include <type_traits>
 #include "error.h"
 #include <functional>
-#include "Cipher.h"
 #include <iostream>
-
+#include <algorithm>
 
 typedef enum Mode{
   Binary = 0,
@@ -286,12 +285,12 @@ OutIterator Base64Encode (OutIterator out, InIterator first,  InIterator last, s
       str += *first++;
       ++len;
     }
-    BIO_write(b64, (const void*)&str.front(), len);
+    BIO_write(b64, reinterpret_cast<const void*>(&str.front()), len);
   }
   else
   {
     len = last -first;
-    BIO_write(b64, (const void*)first, len);//len byte from buffer
+    BIO_write(b64, reinterpret_cast<const void*>(&*first), len);//len byte from buffer
   }
   BIO_flush(b64);
   BIO_get_mem_ptr(b64, &bptr);
@@ -397,12 +396,12 @@ OutIterator Base64Decodeold (OutIterator out,InIterator first, InIterator last, 
       str += *first++;
       ++len;
     }
-    bmem = BIO_new_mem_buf((void*)&str.front(),len);
+    bmem = BIO_new_mem_buf(reinterpret_cast<void*>(&str.front()),len);
   }
   else
   {
     len = last -first;
-    bmem = BIO_new_mem_buf((void*)first, len);
+    bmem = BIO_new_mem_buf(reinterpret_cast<void*>(&*first), len);
   }
   BIO_Guard bmem_gd = {bmem};
 
@@ -450,12 +449,12 @@ OutIterator Base64Decode (OutIterator out,InIterator first, InIterator last, siz
       str += *first++;
       ++len;
     }
-    bmem = BIO_new_mem_buf((void*)&str.front(),len);
+    bmem = BIO_new_mem_buf(reinterpret_cast<void*>(&str.front()),len);
   }
   else
   {
     len = last -first;
-    bmem = BIO_new_mem_buf((void*)first, len);
+    bmem = BIO_new_mem_buf(reinterpret_cast<void*>(&*first), len);
   }
   BIO_Guard bmem_gd = {bmem};
 
@@ -490,11 +489,11 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
     std::string str("TransCode: InIterator should be random_access_iterator!");
     throw Error(str);
   }
-  if(!input)
+/*  if(!input)  //operator "!" is not defined for iterator
   {
     std::string str("TransCode: input null pointer!");
     throw Error(str);
-  }
+  }*/
   if(isEncode) 
   {
     if(Hex ==  mode)
@@ -504,19 +503,20 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
         offset = len % 32;
         if(offset)
         {
-          memcpy(offsetData, input + len - offset, offset);
+//          memcpy(offsetData, input + len - offset, offset);
+          copy_n(input + len -offset, offset, offsetData);    
           len -= offset;
         }
       }
       finish =  Byte2Hex(out, input, input + len, count, with_new_line, total);
       if(with_new_line && offsetData && offset)
       {
-        memcpy(input, offsetData, offset);
+//        memcpy(input, offsetData, offset);
+        copy_n(offsetData, offset, input);
       }
     }
     else if(Base64 == mode)
     { 
-    
       if(offsetData) 
       { 
         int mod = 48;
@@ -525,7 +525,8 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
         offset =  len % mod;
         if(offset != 0)
         {
-          memcpy(offsetData, input + len - offset, offset);
+//        memcpy(offsetData, input + len - offset, offset);
+          copy_n(input + len -offset, offset, offsetData);    
           len -= offset;
         }
       }
@@ -533,7 +534,8 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
      
       if(offsetData && offset != 0)
       { 
-        memcpy(input, offsetData, offset);
+//       memcpy(input, offsetData, offset);
+        copy_n(offsetData, offset, input);
       }
     }
     else
@@ -555,7 +557,8 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
         offset = len % mod;
         if(offset != 0)
         {
-          memcpy(offsetData, input + len - offset, offset);
+//          memcpy(offsetData, input + len - offset, offset);
+          copy_n(input + len -offset, offset, offsetData);    
           len -= offset;
         }
       }
@@ -563,7 +566,8 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
      
       if(offsetData && offset != 0)
       { 
-        memcpy(input, offsetData, offset);
+ //       memcpy(input, offsetData, offset);
+        copy_n(offsetData, offset, input);
       }
    
     }
@@ -577,7 +581,8 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
         offset = len % mod;
         if(offset != 0)
         {
-          memcpy(offsetData, input + len - offset, offset);
+//          memcpy(offsetData, input + len - offset, offset);
+          copy_n(input + len -offset, offset, offsetData);    
           len -= offset;
         }
       }
@@ -586,7 +591,8 @@ OutIterator TransCode (OutIterator out, InIterator input,  int len, size_t&count
       
       if(offsetData && offset != 0)
       { 
-        memcpy(input, offsetData, offset);
+//       memcpy(input, offsetData, offset);
+        copy_n(offsetData, offset, input);
       }
    
     }
